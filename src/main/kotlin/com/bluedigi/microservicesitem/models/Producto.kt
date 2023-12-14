@@ -6,5 +6,6 @@ data class Producto(
     var id: Long = 0,
     var nombre: String = "",
     var precio: Double = 0.0,
-    val createAt: Date = Date()
+    val createAt: Date = Date(),
+    var port: Int = 0
 )

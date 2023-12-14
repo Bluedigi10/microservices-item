@@ -13,9 +13,8 @@ class ItemServiceFeign: IItemInterfac {
     lateinit var clienteRest: ProductoClientRest
 
     override fun findAll(): List<Item> {
-        println("Con feign")
         return clienteRest.list().stream().map { p -> Item(p,1) }
-            .collect(Collectors.toList())
+            .toList()
     }
 
     override fun findById(id: Long, cantidad: Int): Item {
