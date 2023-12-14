@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.util.stream.Collectors
 
-@Service
+@Service("ItemRest")
 class ItemService: IItemInterfac {
     @Autowired
     lateinit var clienteRest: RestTemplate

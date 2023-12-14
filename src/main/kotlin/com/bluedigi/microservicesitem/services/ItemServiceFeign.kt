@@ -7,8 +7,7 @@ import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 import java.util.stream.Collectors
 
-@Service
-@Primary
+@Service("ItemFeign")
 class ItemServiceFeign: IItemInterfac {
     @Autowired
     lateinit var clienteRest: ProductoClientRest
