@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JCircuitBreakerFactory
+import org.springframework.cloud.context.config.annotation.RefreshScope
 import org.springframework.core.env.Environment
 import org.springframework.core.env.get
 import org.springframework.http.HttpStatus
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RestController
 import java.util.concurrent.CompletableFuture
 
+@RefreshScope
 @RestController
 class ItemController {
 
@@ -32,7 +34,7 @@ class ItemController {
     lateinit var env: Environment
 
     @Autowired
-    @Qualifier("ItemFeign")
+    @Qualifier("ItemRest")
     lateinit var service: IItemInterfac
 
     @Value("\${config.texto}")

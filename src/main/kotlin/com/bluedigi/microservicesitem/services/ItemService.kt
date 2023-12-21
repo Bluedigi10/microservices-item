@@ -12,12 +12,12 @@ class ItemService: IItemInterfac {
     @Autowired
     lateinit var clienteRest: RestTemplate
 
-    val path = "http://localhost:8001/"
+    val path = "http://microservices/"
 
     override fun findAll(): List<Item> {
         println("Con restTemplate")
         val arrayProducto = clienteRest.getForObject("${path}list", Array<Producto>::class.java)
-        println(arrayProducto)
+        println("$arrayProducto hola")
         val productos: List<Producto> = arrayProducto!!.toList()
         val items = productos.stream().map { p -> Item(p,1) }
         return items.collect(Collectors.toList())
