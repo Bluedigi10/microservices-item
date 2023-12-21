@@ -9,7 +9,12 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JCircuitBreakerFactory
+import org.springframework.core.env.Environment
+import org.springframework.core.env.get
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RestController
@@ -24,57 +29,60 @@ class ItemController {
     lateinit var cbFactory: Resilience4JCircuitBreakerFactory
 
     @Autowired
+    lateinit var env: Environment
+
+    @Autowired
     @Qualifier("ItemFeign")
     lateinit var service: IItemInterfac
+
+    @Value("\${config.texto}")
+    val texto = ""
+
+    @Value("\${server.port}")
+    val port = ""
 
     @GetMapping("/findAll")
     fun findAll(): List<Item>{
         return service.findAll()
     }
 
-    @GetMapping("find/{id}/cantidad/{cantidad}")
-    fun search(@PathVariable id: Long, @PathVariable cantidad: Int): Item{
-        return cbFactory.create("items")
-                    .run({service.findById(id, cantidad)}, {e -> searchAlternative(id, cantidad, e)})
-    }
-
     @CircuitBreaker(name = "items", fallbackMethod = "searchAlternative")
-    @GetMapping("find2/{id}/cantidad/{cantidad}")
-    fun search2(@PathVariable id: Long, @PathVariable cantidad: Int): Item{
-        return service.findById(id, cantidad)
-    }
-
-    @TimeLimiter(name = "items", fallbackMethod = "searchAlternative2")
-    @GetMapping("find3/{id}/cantidad/{cantidad}")
-    fun search3(@PathVariable id: Long, @PathVariable cantidad: Int): CompletableFuture<Item>{
+    @TimeLimiter(name = "items", fallbackMethod = "searchAlternative")
+    @GetMapping("find/{id}/cantidad/{cantidad}")
+    fun search(@PathVariable id: Long, @PathVariable cantidad: Int): CompletableFuture<Item>{
         return CompletableFuture.supplyAsync { service.findById(id, cantidad) }
     }
 
-    fun searchAlternative(id: Long, cantidad: Int, e: Throwable): Item{
-        logger.warn(e.message)
-        val item = Item()
-        val producto = Producto()
-        producto.id = id
-        producto.nombre = "Camara Sony"
-        producto.precio = 500.0
+    fun searchAlternative(id: Long, cantidad: Int, e: Throwable): CompletableFuture<Item>{
+        logger.warn("${e.message}")
 
-        item.producto = producto
-        item.cantidad = cantidad
-
-        return item
+        return CompletableFuture.supplyAsync { Item(Producto(id,"Camara", 500.0), cantidad) }
     }
 
-    fun searchAlternative2(id: Long, cantidad: Int, e: Throwable): CompletableFuture<Item>{
-        logger.warn(e.message)
-        val item = Item()
-        val producto = Producto()
-        producto.id = id
-        producto.nombre = "Camara Sony"
-        producto.precio = 500.0
+    @GetMapping("/get-config")
+    fun getConfig(): ResponseEntity<Any>{
+        val json = HashMap<String, String>()
+        json["texto"] = texto
+        json["port"] = port
 
-        item.producto = producto
-        item.cantidad = cantidad
+        if (env.activeProfiles.isNotEmpty() && env.activeProfiles[0] == "dev"){
+            json["name"] = env["config.autor.name"].toString()
+            json["email"] = env["config.autor.email"].toString()
+        }
 
-        return CompletableFuture.supplyAsync { item }
+        return ResponseEntity(json, HttpStatus.OK)
     }
+
+    /*@GetMapping("find2/{id}/cantidad/{cantidad}")
+    fun search2(@PathVariable id: Long, @PathVariable cantidad: Int): Item{
+        return cbFactory.create("items")
+            .run({service.findById(id, cantidad)}, {e -> searchAlternative(id, cantidad, e)})
+    }*/
+
+    /*@CircuitBreaker(name = "items", fallbackMethod = "searchAlternative")
+    @TimeLimiter(name = "items")
+    @GetMapping("find3/{id}/cantidad/{cantidad}")
+    fun search3(@PathVariable id: Long, @PathVariable cantidad: Int): Item{
+        return service.findById(id, cantidad)
+    }*/
 }
